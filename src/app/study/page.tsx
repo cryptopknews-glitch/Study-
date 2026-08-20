@@ -1,9 +1,32 @@
 'use client'
 
-import { Suspense, useState, type FormEvent } from 'react'
+import { Suspense, useState, type FormEvent, type ComponentProps } from 'react'
 import { useSearchParams } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Class, Subject } from '@/lib/types'
 import { CLASSES, SUBJECTS, ANSWER_MODES, type AnswerModeId } from '@/lib/constants'
+
+const markdownComponents: ComponentProps<typeof ReactMarkdown>['components'] = {
+  h1: (props) => <h2 className="text-lg font-bold text-slate-900 mt-4 mb-2 first:mt-0" {...props} />,
+  h2: (props) => <h3 className="text-base font-bold text-slate-900 mt-4 mb-2 first:mt-0" {...props} />,
+  h3: (props) => <h4 className="text-sm font-bold text-slate-900 mt-3 mb-1 first:mt-0" {...props} />,
+  p: (props) => <p className="text-sm text-slate-700 leading-relaxed mb-2" {...props} />,
+  strong: (props) => <strong className="font-semibold text-slate-900" {...props} />,
+  ul: (props) => <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 mb-3" {...props} />,
+  ol: (props) => <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-700 mb-3" {...props} />,
+  li: (props) => <li {...props} />,
+  code: (props) => <code className="bg-slate-100 rounded px-1 py-0.5 text-xs font-mono text-slate-800" {...props} />,
+  pre: (props) => <pre className="bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto text-xs my-3" {...props} />,
+  hr: () => <hr className="my-4 border-slate-200" />,
+  table: (props) => (
+    <div className="overflow-x-auto mb-3">
+      <table className="min-w-full text-sm border border-slate-200" {...props} />
+    </div>
+  ),
+  th: (props) => <th className="border border-slate-200 bg-slate-50 px-2 py-1 text-left font-semibold" {...props} />,
+  td: (props) => <td className="border border-slate-200 px-2 py-1" {...props} />,
+}
 
 function StudyForm() {
   const searchParams = useSearchParams()
@@ -19,6 +42,7 @@ function StudyForm() {
   const [loading, setLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -27,6 +51,7 @@ function StudyForm() {
     setLoading(true)
     setAnswer(null)
     setError(null)
+    setCopied(false)
 
     try {
       const res = await fetch('/api/study', {
@@ -51,6 +76,24 @@ function StudyForm() {
       setError('Network error. Internet check karein aur dobara koshish karein.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  function handleNewQuestion() {
+    setQuestion('')
+    setAnswer(null)
+    setError(null)
+    setCopied(false)
+  }
+
+  async function handleCopy() {
+    if (!answer) return
+    try {
+      await navigator.clipboard.writeText(answer)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard not available, silently ignore
     }
   }
 
@@ -135,8 +178,11 @@ function StudyForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-primary text-white font-semibold py-3 disabled:opacity-60"
+          className="w-full rounded-lg bg-primary text-white font-semibold py-3 disabled:opacity-60 flex items-center justify-center gap-2"
         >
+          {loading && (
+            <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          )}
           {loading ? 'Solving...' : 'Solve in 10 Minutes'}
         </button>
       </form>
@@ -148,8 +194,29 @@ function StudyForm() {
       )}
 
       {answer && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
-          {answer}
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+              {selectedSubject} · {mode}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopy}
+                className="text-xs font-medium text-primary border border-primary/30 rounded-md px-2 py-1"
+              >
+                {copied ? 'Copied ✓' : 'Copy'}
+              </button>
+              <button
+                onClick={handleNewQuestion}
+                className="text-xs font-medium text-slate-600 border border-slate-300 rounded-md px-2 py-1"
+              >
+                New Question
+              </button>
+            </div>
+          </div>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            {answer}
+          </ReactMarkdown>
         </div>
       )}
     </div>
