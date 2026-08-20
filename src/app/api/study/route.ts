@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/prompts'
+import { findRelevantContext } from '@/lib/retrieval'
 import type { Class, Subject } from '@/lib/types'
 import type { AnswerModeId } from '@/lib/constants'
 
@@ -40,6 +41,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
   }
 
+  const context = await findRelevantContext({ studentClass, subject, question })
+
   try {
     const aiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -58,7 +61,7 @@ export async function POST(req: NextRequest) {
               role: 'user',
               parts: [
                 {
-                  text: buildUserPrompt({ studentClass, subject, question, mode }),
+                  text: buildUserPrompt({ studentClass, subject, question, mode, context }),
                 },
               ],
             },
@@ -88,7 +91,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({ answer })
+    return NextResponse.json({ answer, usedUploadedMaterial: Boolean(context) })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Unknown server error.' },
