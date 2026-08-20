@@ -16,11 +16,42 @@ function StudyForm() {
   )
   const [mode, setMode] = useState<AnswerModeId>(presetMode ?? 'explain')
   const [question, setQuestion] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [answer, setAnswer] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSubmitted(true)
+    if (!question.trim()) return
+
+    setLoading(true)
+    setAnswer(null)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/study', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentClass: selectedClass,
+          subject: selectedSubject,
+          question,
+          mode,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Kuch masla ho gaya, dobara koshish karein.')
+      } else {
+        setAnswer(data.answer)
+      }
+    } catch {
+      setError('Network error. Internet check karein aur dobara koshish karein.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -103,19 +134,22 @@ function StudyForm() {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-primary text-white font-semibold py-3"
+          disabled={loading}
+          className="w-full rounded-lg bg-primary text-white font-semibold py-3 disabled:opacity-60"
         >
-          Solve in 10 Minutes
+          {loading ? 'Solving...' : 'Solve in 10 Minutes'}
         </button>
       </form>
 
-      {submitted && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
-          AI integration Phase 3 mein add hogi. Abhi ye Phase 2 UI-only version hai.
-          <br />
-          <span className="font-medium text-slate-800">
-            {selectedClass} · {selectedSubject} · {mode}
-          </span>
+      {error && (
+        <div className="rounded-lg border border-danger/30 bg-red-50 p-4 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      {answer && (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+          {answer}
         </div>
       )}
     </div>
