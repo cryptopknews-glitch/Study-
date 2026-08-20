@@ -6,9 +6,9 @@ import type { AnswerModeId } from '@/lib/constants'
 export const runtime = 'nodejs'
 
 // Free-tier model via Google AI Studio (no billing required).
-// 'gemini-2.5-flash' = better quality, still free.
-// 'gemini-2.5-flash-lite' = fastest / highest free daily quota.
-const MODEL = 'gemini-2.5-flash'
+// 'gemini-3.6-flash' = better quality, still free.
+// 'gemini-3.5-flash-lite' = fastest / highest free daily quota.
+const MODEL = 'gemini-3.6-flash'
 
 interface StudyRequestBody {
   studentClass: Class
