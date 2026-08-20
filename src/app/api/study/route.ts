@@ -5,10 +5,10 @@ import type { AnswerModeId } from '@/lib/constants'
 
 export const runtime = 'nodejs'
 
-// Cost note (see project rule #26 - AI Cost Control):
-// 'claude-sonnet-5' gives the best quality/cost balance for study explanations.
-// For heavier usage or lower cost, switch MODEL below to 'claude-haiku-4-5-20251001'.
-const MODEL = 'claude-sonnet-5'
+// Free-tier model via Google AI Studio (no billing required).
+// 'gemini-2.5-flash' = better quality, still free.
+// 'gemini-2.5-flash-lite' = fastest / highest free daily quota.
+const MODEL = 'gemini-2.5-flash'
 
 interface StudyRequestBody {
   studentClass: Class
@@ -18,11 +18,11 @@ interface StudyRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'ANTHROPIC_API_KEY is not configured on the server. Add it in Vercel Project Settings -> Environment Variables.' },
+      { error: 'GEMINI_API_KEY is not configured on the server. Add it in Vercel Project Settings -> Environment Variables.' },
       { status: 500 }
     )
   }
@@ -41,25 +41,31 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1500,
-        system: buildSystemPrompt(),
-        messages: [
-          {
-            role: 'user',
-            content: buildUserPrompt({ studentClass, subject, question, mode }),
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: buildSystemPrompt() }],
           },
-        ],
-      }),
-    })
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: buildUserPrompt({ studentClass, subject, question, mode }),
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    )
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text()
@@ -71,10 +77,16 @@ export async function POST(req: NextRequest) {
 
     const data = await aiResponse.json()
     const answer: string =
-      data.content
-        ?.filter((block: { type: string }) => block.type === 'text')
-        .map((block: { text: string }) => block.text)
+      data.candidates?.[0]?.content?.parts
+        ?.map((part: { text?: string }) => part.text ?? '')
         .join('\n') ?? ''
+
+    if (!answer) {
+      return NextResponse.json(
+        { error: 'AI ne khaali jawab diya. Dobara koshish karein ya question thoda rephrase karein.' },
+        { status: 502 }
+      )
+    }
 
     return NextResponse.json({ answer })
   } catch (err) {
