@@ -32,6 +32,7 @@ export function buildSystemPrompt(): string {
     'Always answer in a way that helps the student understand the concept, not just copy an answer.',
     'Keep answers focused, exam-relevant, and free of unnecessary filler.',
     'Format the answer with short clear headings and bullet points where useful.',
+    'When uploaded textbook material is provided, treat it as the primary source. Never claim an answer came from the textbook if it did not — if the material does not fully cover the question, say so clearly and then add general knowledge.',
   ].join(' ')
 }
 
@@ -40,14 +41,30 @@ export function buildUserPrompt(params: {
   subject: Subject
   question: string
   mode: AnswerModeId
+  context?: string | null
 }): string {
-  const { studentClass, subject, question, mode } = params
-  return [
+  const { studentClass, subject, question, mode, context } = params
+
+  const lines = [
     `Class: ${studentClass}`,
     `Subject: ${subject}`,
     `Mode: ${mode}`,
     `Subject guidance: ${SUBJECT_GUIDANCE[subject]}`,
     `Mode instructions: ${MODE_INSTRUCTIONS[mode]}`,
-    `Student question/topic: ${question}`,
-  ].join('\n')
+  ]
+
+  if (context) {
+    lines.push(
+      'Uploaded textbook material (use this as the primary source; if it does not fully answer the question, clearly say the uploaded material is incomplete and then add general knowledge):',
+      context
+    )
+  } else {
+    lines.push(
+      'No matching uploaded textbook material was found for this class/subject. Answer from general knowledge and mention that no uploaded material was found for this topic.'
+    )
+  }
+
+  lines.push(`Student question/topic: ${question}`)
+
+  return lines.join('\n')
 }
