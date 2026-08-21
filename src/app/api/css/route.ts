@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { logActivity } from '@/lib/activityLog'
 
 export const runtime = 'nodejs'
 
@@ -76,8 +75,6 @@ export async function POST(req: NextRequest) {
     if (!answer) {
       return NextResponse.json({ error: 'AI ne khaali jawab diya.' }, { status: 502 })
     }
-
-    await logActivity({ source: 'css', subject: topic, question, answer })
 
     return NextResponse.json({ answer })
   } catch (err) {
