@@ -5,11 +5,22 @@ import Navbar from '@/components/Navbar'
 export const metadata: Metadata = {
   title: '10MinStudy - Personal AI Study Assistant',
   description: 'Your personal ICS study assistant for Class 11 & 12',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: '10MinStudy',
+  },
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/icon-192.png',
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#4f46e5',
 }
 
 export default function RootLayout({
