@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { ENGLISH_AREAS } from '@/lib/constants'
 
 export default function EnglishPage() {
@@ -10,10 +11,20 @@ export default function EnglishPage() {
         </p>
       </div>
 
-      <div className="rounded-xl bg-primary text-white p-5 text-center">
-        <p className="font-semibold">10 Minute English Practice</p>
+      <Link
+        href="/english/tenses"
+        className="block rounded-xl bg-primary text-white p-5 text-center active:opacity-90"
+      >
+        <p className="font-semibold">Tenses Tool</p>
         <p className="text-xs font-normal opacity-90 mt-1">
-          Daily practice tool comes in Phase 6
+          12 tenses — Urdu explanation, structure, examples, aur AI-checked practice
+        </p>
+      </Link>
+
+      <div className="rounded-xl bg-white border border-slate-200 p-5 text-center">
+        <p className="font-semibold text-slate-800">10 Minute English Practice</p>
+        <p className="text-xs font-normal text-slate-500 mt-1">
+          Daily practice tool comes in Phase 6 (part 2)
         </p>
       </div>
 
