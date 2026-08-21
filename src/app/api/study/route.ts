@@ -4,13 +4,10 @@ import { findRelevantContext } from '@/lib/retrieval'
 import { logActivity } from '@/lib/activityLog'
 import type { Class, Subject } from '@/lib/types'
 import type { AnswerModeId } from '@/lib/constants'
+import { getGeminiConfig } from '@/lib/aiConfig'
 
 export const runtime = 'nodejs'
 
-// Free-tier model via Google AI Studio (no billing required).
-// 'gemini-3.6-flash' = better quality, still free.
-// 'gemini-3.5-flash-lite' = fastest / highest free daily quota.
-const MODEL = 'gemini-3.6-flash'
 
 interface StudyRequestBody {
   studentClass: Class
@@ -20,7 +17,7 @@ interface StudyRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.GEMINI_API_KEY
+  const { apiKey, model } = await getGeminiConfig()
 
   if (!apiKey) {
     return NextResponse.json(
@@ -50,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: 'POST',
         headers: {

@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/upload', label: 'Upload' },
   { href: '/manage', label: 'My Uploads' },
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/settings', label: 'AI Settings' },
 ]
 
 export default function Navbar() {

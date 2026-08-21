@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getGeminiConfig } from '@/lib/aiConfig'
 
 export const runtime = 'nodejs'
 
-const MODEL = 'gemini-3.6-flash'
 
 interface Body {
   action?: 'suggest_topic' | 'evaluate'
@@ -11,7 +11,7 @@ interface Body {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.GEMINI_API_KEY
+  const { apiKey, model } = await getGeminiConfig()
   if (!apiKey) {
     return NextResponse.json({ error: 'GEMINI_API_KEY is not configured on the server.' }, { status: 500 })
   }
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (body.action === 'suggest_topic') {
     const prompt = 'Give ONE thoughtful, analytical essay topic in the style of CSS (Pakistan) Essay paper topics (governance, society, technology, philosophy, economy). Output ONLY the topic, nothing else.'
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     ].join('\n')
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),

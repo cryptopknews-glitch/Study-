@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getGeminiConfig } from '@/lib/aiConfig'
 
 export const runtime = 'nodejs'
 
-const MODEL = 'gemini-3.6-flash'
 
 interface CheckRequestBody {
   tenseName?: string
@@ -10,7 +10,7 @@ interface CheckRequestBody {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.GEMINI_API_KEY
+  const { apiKey, model } = await getGeminiConfig()
 
   if (!apiKey) {
     return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: 'POST',
         headers: {

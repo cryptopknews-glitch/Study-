@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
+import { getGeminiConfig } from '@/lib/aiConfig'
 
 export const runtime = 'nodejs'
 
-const MODEL = 'gemini-3.6-flash'
 
 const SCHEMA = `Respond with ONLY valid JSON (no markdown fences):
 {
@@ -11,7 +11,7 @@ const SCHEMA = `Respond with ONLY valid JSON (no markdown fences):
 } (exactly 5 questions)`
 
 export async function POST() {
-  const apiKey = process.env.GEMINI_API_KEY
+  const { apiKey, model } = await getGeminiConfig()
   if (!apiKey) {
     return NextResponse.json({ error: 'GEMINI_API_KEY is not configured on the server.' }, { status: 500 })
   }
@@ -23,7 +23,7 @@ export async function POST() {
   ].join('\n')
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({

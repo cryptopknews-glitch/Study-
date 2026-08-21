@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseClient } from '@/lib/supabase'
 import { chunkText } from '@/lib/chunk'
+import { getGeminiConfig } from '@/lib/aiConfig'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const MODEL = 'gemini-3.6-flash'
 // Gemini inline document requests top out well above this; keep a safe ceiling
 // so extraction stays reliable within the serverless function's time limit.
 const MAX_PDF_BYTES = 15 * 1024 * 1024
 
-async function extractTextWithGemini(base64Pdf: string, apiKey: string): Promise<string> {
+async function extractTextWithGemini(base64Pdf: string, apiKey: string, model: string): Promise<string> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
       method: 'POST',
       headers: {
@@ -50,7 +50,7 @@ async function extractTextWithGemini(base64Pdf: string, apiKey: string): Promise
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.GEMINI_API_KEY
+  const { apiKey, model } = await getGeminiConfig()
 
   if (!apiKey) {
     return NextResponse.json(
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     const base64Pdf = Buffer.from(arrayBuffer).toString('base64')
-    const extractedText = await extractTextWithGemini(base64Pdf, apiKey)
+    const extractedText = await extractTextWithGemini(base64Pdf, apiKey, model)
     const chunks = chunkText(extractedText)
 
     // Clean up: we only need the extracted text going forward, not the raw PDF.
