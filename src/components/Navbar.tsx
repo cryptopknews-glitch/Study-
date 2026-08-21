@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: '/css', label: 'CSS Foundation' },
   { href: '/upload', label: 'Upload' },
   { href: '/manage', label: 'My Uploads' },
+  { href: '/dashboard', label: 'Dashboard' },
 ]
 
 export default function Navbar() {
