@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: '/study', label: 'Study' },
   { href: '/english', label: 'English' },
   { href: '/upload', label: 'Upload' },
+  { href: '/manage', label: 'My Uploads' },
 ]
 
 export default function Navbar() {
