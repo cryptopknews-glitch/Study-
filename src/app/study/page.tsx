@@ -85,7 +85,7 @@ function StudyForm() {
     if (!answer) return
     setSavingNote(true)
     try {
-      await fetch('/api/notes', {
+      const res = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,10 +95,16 @@ function StudyForm() {
           subject: selectedSubject,
         }),
       })
-      setNoteSaved(true)
-      setTimeout(() => setNoteSaved(false), 2000)
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Note save nahi ho saka.')
+      } else {
+        setNoteSaved(true)
+        setTimeout(() => setNoteSaved(false), 2000)
+      }
     } catch {
-      // silently ignore, non-critical
+      setError('Network error — note save nahi ho saka.')
     } finally {
       setSavingNote(false)
     }
