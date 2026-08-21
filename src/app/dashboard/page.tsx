@@ -91,9 +91,17 @@ export default function DashboardPage() {
 
   return (
     <div className="px-4 py-8 space-y-8 pb-16">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">My Dashboard</h1>
-        <p className="text-slate-600 text-sm">Progress, history, aur saved notes</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">My Dashboard</h1>
+          <p className="text-slate-600 text-sm">Progress, history, aur saved notes</p>
+        </div>
+        <button
+          onClick={load}
+          className="shrink-0 text-xs font-medium text-primary border border-primary/30 rounded-md px-3 py-1.5"
+        >
+          🔄 Refresh
+        </button>
       </div>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
