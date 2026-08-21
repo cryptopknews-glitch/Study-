@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 })
   }
 
+  if (question.length > 2000) {
+    return NextResponse.json({ error: 'Question bahut lambi hai (max 2000 characters).' }, { status: 400 })
+  }
+
   const context = await findRelevantContext({ studentClass, subject, question })
 
   try {
