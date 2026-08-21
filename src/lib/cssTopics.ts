@@ -43,6 +43,13 @@ export const CSS_TOPICS: CssTopic[] = [
     active: true,
   },
   {
+    slug: 'sentence-correction',
+    name: 'Sentence Correction',
+    description: 'Spot and fix grammar errors, CSS exam style.',
+    icon: '✏️',
+    active: true,
+  },
+  {
     slug: 'current-affairs',
     name: 'Current Affairs',
     description: 'Recent national and international developments.',
@@ -68,14 +75,14 @@ export const CSS_TOPICS: CssTopic[] = [
     name: 'Analytical Thinking',
     description: 'Logical reasoning and analytical skills.',
     icon: '🧠',
-    active: false,
+    active: true,
   },
   {
     slug: 'reading-comprehension',
     name: 'Reading Comprehension',
     description: 'Understanding and answering questions on passages.',
     icon: '📚',
-    active: false,
+    active: true,
   },
 ]
 

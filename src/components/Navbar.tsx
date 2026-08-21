@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: '/subjects', label: 'Subjects' },
   { href: '/study', label: 'Study' },
   { href: '/mock-exam', label: 'Mock Exam' },
+  { href: '/flashcards', label: 'Flashcards' },
   { href: '/english', label: 'English' },
   { href: '/bscs', label: 'BSCS Prep' },
   { href: '/css', label: 'CSS Foundation' },
