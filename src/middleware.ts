@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Always allow the login page, login API, and Next.js internals through.
+  // Always allow the login page, login API, Next.js internals, and PWA assets through.
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/login') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon')
+    pathname.startsWith('/favicon') ||
+    pathname === '/manifest.json' ||
+    pathname.startsWith('/icon-')
   ) {
     return NextResponse.next()
   }
