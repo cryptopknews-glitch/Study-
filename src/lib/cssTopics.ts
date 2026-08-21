@@ -40,7 +40,7 @@ export const CSS_TOPICS: CssTopic[] = [
     name: 'Precis Writing',
     description: 'Summarizing passages concisely and accurately.',
     icon: '📝',
-    active: false,
+    active: true,
   },
   {
     slug: 'current-affairs',

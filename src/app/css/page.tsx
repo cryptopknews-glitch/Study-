@@ -17,7 +17,7 @@ export default function CssPage() {
           t.active ? (
             <Link
               key={t.slug}
-              href={`/css/${t.slug}`}
+              href={t.slug === 'precis' ? '/css/precis' : `/css/${t.slug}`}
               className="rounded-lg border border-slate-200 bg-white p-4 flex items-start gap-3 active:bg-slate-50"
             >
               <span className="text-2xl">{t.icon}</span>
