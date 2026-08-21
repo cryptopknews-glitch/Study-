@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import MarkdownAnswer from '@/components/MarkdownAnswer'
 
 interface ActivityItem {
@@ -31,12 +32,19 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
+
+  async function handleLogout() {
+    await fetch('/api/logout', { method: 'POST' })
+    router.push('/login')
+    router.refresh()
+  }
 
   async function load() {
     setLoading(true)
@@ -109,12 +117,26 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-slate-900">My Dashboard</h1>
           <p className="text-slate-600 text-sm">Progress, history, aur saved notes</p>
         </div>
-        <button
-          onClick={load}
-          className="shrink-0 text-xs font-medium text-primary border border-primary/30 rounded-md px-3 py-1.5"
-        >
-          🔄 Refresh
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={load}
+            className="shrink-0 text-xs font-medium text-primary border border-primary/30 rounded-md px-3 py-1.5"
+          >
+            🔄 Refresh
+          </button>
+          <a
+            href="/api/export"
+            className="shrink-0 text-xs font-medium text-slate-600 border border-slate-300 rounded-md px-3 py-1.5"
+          >
+            📦 Export
+          </a>
+          <button
+            onClick={handleLogout}
+            className="shrink-0 text-xs font-medium text-danger border border-danger/30 rounded-md px-3 py-1.5"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
