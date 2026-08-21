@@ -1,11 +1,16 @@
 'use client'
 
-import { Suspense, useState, type FormEvent, type ComponentProps } from 'react'
+import { Suspense, useState, useRef, type FormEvent, type ComponentProps } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Class, Subject } from '@/lib/types'
 import { CLASSES, SUBJECTS, ANSWER_MODES, type AnswerModeId } from '@/lib/constants'
+
+const MATH_SYMBOLS = [
+  '+', '−', '×', '÷', '=', '±', '≤', '≥', '≠',
+  '√', '²', '³', '^', 'π', '°', 'Δ', '∞', 'θ', '(', ')',
+]
 
 const markdownComponents: ComponentProps<typeof ReactMarkdown>['components'] = {
   h1: (props) => <h2 className="text-lg font-bold text-slate-900 mt-4 mb-2 first:mt-0" {...props} />,
@@ -45,6 +50,24 @@ function StudyForm() {
   const [savingNote, setSavingNote] = useState(false)
   const [noteSaved, setNoteSaved] = useState(false)
   const [copied, setCopied] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  function insertSymbol(symbol: string) {
+    const el = textareaRef.current
+    if (!el) {
+      setQuestion((q) => q + symbol)
+      return
+    }
+    const start = el.selectionStart ?? question.length
+    const end = el.selectionEnd ?? question.length
+    const newValue = question.slice(0, start) + symbol + question.slice(end)
+    setQuestion(newValue)
+    requestAnimationFrame(() => {
+      el.focus()
+      const cursor = start + symbol.length
+      el.setSelectionRange(cursor, cursor)
+    })
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -177,6 +200,7 @@ function StudyForm() {
             Question
           </label>
           <textarea
+            ref={textareaRef}
             id="question"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -184,6 +208,18 @@ function StudyForm() {
             placeholder="e.g. Explain derivatives"
             className="w-full rounded-lg border border-slate-300 py-3 px-3 text-slate-800"
           />
+          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+            {MATH_SYMBOLS.map((symbol) => (
+              <button
+                type="button"
+                key={symbol}
+                onClick={() => insertSymbol(symbol)}
+                className="shrink-0 w-9 h-9 flex items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 text-sm font-medium active:bg-slate-100"
+              >
+                {symbol}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-1">
