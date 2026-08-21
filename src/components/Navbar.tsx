@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: '/study', label: 'Study' },
   { href: '/english', label: 'English' },
   { href: '/bscs', label: 'BSCS Prep' },
+  { href: '/css', label: 'CSS Foundation' },
   { href: '/upload', label: 'Upload' },
   { href: '/manage', label: 'My Uploads' },
 ]
