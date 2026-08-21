@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -68,6 +69,18 @@ export default function DashboardPage() {
       }
     } finally {
       setDeletingNoteId(null)
+    }
+  }
+
+  async function handleDeleteActivity(id: string) {
+    setDeletingActivityId(id)
+    try {
+      const res = await fetch(`/api/activity/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        await load()
+      }
+    } finally {
+      setDeletingActivityId(null)
     }
   }
 
@@ -158,16 +171,25 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {data.recent.map((item) => (
               <div key={item.id} className="rounded-lg border border-slate-200 bg-white p-4">
-                <button
-                  onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                  className="w-full text-left"
-                >
-                  <p className="text-sm text-slate-800 line-clamp-2">{item.question}</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {item.subject || item.source} ·{' '}
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </p>
-                </button>
+                <div className="flex items-start justify-between gap-3">
+                  <button
+                    onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                    className="flex-1 text-left min-w-0"
+                  >
+                    <p className="text-sm text-slate-800 line-clamp-2">{item.question}</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {item.subject || item.source} ·{' '}
+                      {new Date(item.created_at).toLocaleDateString()}
+                    </p>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteActivity(item.id)}
+                    disabled={deletingActivityId === item.id}
+                    className="shrink-0 text-xs font-medium text-danger border border-danger/30 rounded-md px-2 py-1 disabled:opacity-50"
+                  >
+                    {deletingActivityId === item.id ? '...' : 'Delete'}
+                  </button>
+                </div>
                 {expandedId === item.id && (
                   <div className="mt-3 pt-3 border-t border-slate-100">
                     <MarkdownAnswer content={item.answer} />
