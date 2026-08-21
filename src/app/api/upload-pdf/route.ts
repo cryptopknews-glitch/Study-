@@ -3,8 +3,12 @@ import { getSupabaseClient } from '@/lib/supabase'
 import { chunkText } from '@/lib/chunk'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60
 
 const MODEL = 'gemini-3.6-flash'
+// Gemini inline document requests top out well above this; keep a safe ceiling
+// so extraction stays reliable within the serverless function's time limit.
+const MAX_PDF_BYTES = 15 * 1024 * 1024
 
 async function extractTextWithGemini(base64Pdf: string, apiKey: string): Promise<string> {
   const res = await fetch(
@@ -20,12 +24,7 @@ async function extractTextWithGemini(base64Pdf: string, apiKey: string): Promise
           {
             role: 'user',
             parts: [
-              {
-                inline_data: {
-                  mime_type: 'application/pdf',
-                  data: base64Pdf,
-                },
-              },
+              { inline_data: { mime_type: 'application/pdf', data: base64Pdf } },
               {
                 text: 'Extract all readable text from this document exactly as written, including text from scanned or handwritten pages if present. Preserve headings and structure using plain text. Do not summarize and do not add commentary — output only the extracted text.',
               },
@@ -61,33 +60,44 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File | null
-    const studentClass = formData.get('class') as string | null
-    const subject = formData.get('subject') as string | null
-    const chapter = (formData.get('chapter') as string | null) ?? ''
-    const title = (formData.get('title') as string | null) ?? file?.name ?? 'Untitled'
+    const { storagePath, class: studentClass, subject, chapter, title } = await req.json()
 
-    if (!file || !studentClass || !subject) {
+    if (!storagePath || !studentClass || !subject) {
       return NextResponse.json(
-        { error: 'File, class, aur subject zaroori hain.' },
+        { error: 'storagePath, class, aur subject zaroori hain.' },
         { status: 400 }
       )
     }
 
-    // Vercel serverless functions have a request body size limit (~4.5MB on Hobby plan).
-    if (file.size > 4 * 1024 * 1024) {
+    const supabase = getSupabaseClient()
+
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from('textbooks')
+      .download(storagePath)
+
+    if (downloadError || !fileData) {
       return NextResponse.json(
-        { error: 'PDF bahut badi hai (4MB se zyada). Chhoti file ya kam pages wali PDF try karein.' },
+        { error: downloadError?.message || 'File storage se download nahi ho saki.' },
+        { status: 500 }
+      )
+    }
+
+    const arrayBuffer = await fileData.arrayBuffer()
+
+    if (arrayBuffer.byteLength > MAX_PDF_BYTES) {
+      await supabase.storage.from('textbooks').remove([storagePath])
+      return NextResponse.json(
+        { error: 'PDF bahut badi hai (15MB se zyada). Ise chapters mein tod kar upload karein.' },
         { status: 400 }
       )
     }
 
-    const arrayBuffer = await file.arrayBuffer()
     const base64Pdf = Buffer.from(arrayBuffer).toString('base64')
-
     const extractedText = await extractTextWithGemini(base64Pdf, apiKey)
     const chunks = chunkText(extractedText)
+
+    // Clean up: we only need the extracted text going forward, not the raw PDF.
+    await supabase.storage.from('textbooks').remove([storagePath])
 
     if (chunks.length === 0) {
       return NextResponse.json(
@@ -96,11 +106,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const supabase = getSupabaseClient()
-
     const { data: book, error: bookError } = await supabase
       .from('books')
-      .insert({ title, class: studentClass, subject })
+      .insert({ title: title || 'Untitled', class: studentClass, subject })
       .select()
       .single()
 
@@ -115,7 +123,7 @@ export async function POST(req: NextRequest) {
       book_id: book.id,
       class: studentClass,
       subject,
-      chapter,
+      chapter: chapter || '',
       content,
     }))
 
