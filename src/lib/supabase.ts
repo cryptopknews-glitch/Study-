@@ -10,5 +10,11 @@ export function getSupabaseClient() {
 
   return createClient(url, key, {
     auth: { persistSession: false },
+    global: {
+      // Prevent Next.js's patched global fetch from caching Supabase's
+      // internal REST calls — without this, data can appear "stuck" even
+      // after new rows are inserted.
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
   })
 }
