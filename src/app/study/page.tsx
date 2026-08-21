@@ -8,8 +8,12 @@ import type { Class, Subject } from '@/lib/types'
 import { CLASSES, SUBJECTS, ANSWER_MODES, type AnswerModeId } from '@/lib/constants'
 
 const MATH_SYMBOLS = [
-  '+', '−', '×', '÷', '=', '±', '≤', '≥', '≠',
-  '√', '²', '³', '^', 'π', '°', 'Δ', '∞', 'θ', '(', ')',
+  '+', '−', '×', '÷', '=', '≠', '±',
+  '≤', '≥', '≈', '≅',
+  '∴', '∵', '⇒', '⊥', '∥', '∈', '∉', '↔',
+  '√', '²', '³', '^',
+  'π', 'φ', 'θ', 'Δ', '°', '∞',
+  '(', ')',
 ]
 
 const markdownComponents: ComponentProps<typeof ReactMarkdown>['components'] = {
