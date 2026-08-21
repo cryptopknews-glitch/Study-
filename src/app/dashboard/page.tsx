@@ -41,7 +41,7 @@ export default function DashboardPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/dashboard')
+      const res = await fetch('/api/dashboard', { cache: 'no-store' })
       const json = await res.json()
       if (!res.ok) {
         setError(json.error || 'Data load nahi ho saka.')
