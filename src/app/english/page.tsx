@@ -21,12 +21,15 @@ export default function EnglishPage() {
         </p>
       </Link>
 
-      <div className="rounded-xl bg-white border border-slate-200 p-5 text-center">
+      <Link
+        href="/english/practice"
+        className="block rounded-xl bg-white border border-slate-200 p-5 text-center active:bg-slate-50"
+      >
         <p className="font-semibold text-slate-800">10 Minute English Practice</p>
         <p className="text-xs font-normal text-slate-500 mt-1">
-          Daily practice tool comes in Phase 6 (part 2)
+          Vocabulary + Grammar + Correction + Writing + Quiz
         </p>
-      </div>
+      </Link>
 
       <div>
         <p className="text-sm font-medium text-slate-700 mb-2">Areas</p>
