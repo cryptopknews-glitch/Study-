@@ -32,6 +32,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Sentence zaroori hai.' }, { status: 400 })
   }
 
+  if (sentence.length > 500) {
+    return NextResponse.json({ error: 'Sentence bahut lambi hai (max 500 characters).' }, { status: 400 })
+  }
+
   const prompt = [
     'You are an English tenses tutor for a Pakistani ICS student.',
     `The student is practicing the "${tenseName}" tense.`,
