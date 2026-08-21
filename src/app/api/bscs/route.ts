@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Topic aur question zaroori hain.' }, { status: 400 })
   }
 
+  if (question.length > 2000) {
+    return NextResponse.json({ error: 'Question bahut lambi hai (max 2000 characters).' }, { status: 400 })
+  }
+
   const systemPrompt = [
     'You are a BS Computer Science preparation tutor inside 10MinStudy.',
     'The student is currently in ICS (Class 11/12) and preparing for a university Computer Science degree.',
