@@ -42,6 +42,8 @@ function StudyForm() {
   const [loading, setLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
   const [copied, setCopied] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
@@ -76,6 +78,29 @@ function StudyForm() {
       setError('Network error. Internet check karein aur dobara koshish karein.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleSaveNote() {
+    if (!answer) return
+    setSavingNote(true)
+    try {
+      await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: question.slice(0, 60) || `${selectedSubject} note`,
+          content: answer,
+          class: selectedClass,
+          subject: selectedSubject,
+        }),
+      })
+      setNoteSaved(true)
+      setTimeout(() => setNoteSaved(false), 2000)
+    } catch {
+      // silently ignore, non-critical
+    } finally {
+      setSavingNote(false)
     }
   }
 
@@ -205,6 +230,13 @@ function StudyForm() {
                 className="text-xs font-medium text-primary border border-primary/30 rounded-md px-2 py-1"
               >
                 {copied ? 'Copied ✓' : 'Copy'}
+              </button>
+              <button
+                onClick={handleSaveNote}
+                disabled={savingNote}
+                className="text-xs font-medium text-slate-600 border border-slate-300 rounded-md px-2 py-1 disabled:opacity-50"
+              >
+                {noteSaved ? 'Saved ✓' : savingNote ? 'Saving...' : 'Save to Notes'}
               </button>
               <button
                 onClick={handleNewQuestion}
