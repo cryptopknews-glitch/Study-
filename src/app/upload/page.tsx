@@ -3,6 +3,9 @@
 import { useState, type FormEvent } from 'react'
 import { CLASSES, SUBJECTS } from '@/lib/constants'
 import type { Class, Subject } from '@/lib/types'
+import { getBrowserSupabaseClient } from '@/lib/supabaseClient'
+
+const MAX_PDF_BYTES = 15 * 1024 * 1024
 
 export default function UploadPage() {
   const [studentClass, setStudentClass] = useState<Class>('Class 11')
@@ -10,6 +13,7 @@ export default function UploadPage() {
   const [chapter, setChapter] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,8 +23,8 @@ export default function UploadPage() {
       setError('Pehle PDF file select karein.')
       return
     }
-    if (file.size > 4 * 1024 * 1024) {
-      setError('PDF bahut badi hai (4MB se zyada). Chhoti file ya kam pages wali PDF try karein.')
+    if (file.size > MAX_PDF_BYTES) {
+      setError('PDF bahut badi hai (15MB se zyada). Ise chapters mein tod kar upload karein.')
       return
     }
 
@@ -28,21 +32,52 @@ export default function UploadPage() {
     setMessage(null)
     setError(null)
 
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('class', studentClass)
-    formData.append('subject', subject)
-    formData.append('chapter', chapter)
-    formData.append('title', file.name)
-
     try {
-      const res = await fetch('/api/upload-pdf', { method: 'POST', body: formData })
-      const data = await res.json()
+      setStatus('Upload URL taiyar ho rahi hai...')
+      const urlRes = await fetch('/api/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name }),
+      })
+      const urlData = await urlRes.json()
+      if (!urlRes.ok) {
+        setError(urlData.error || 'Upload URL nahi ban saki.')
+        setLoading(false)
+        return
+      }
 
-      if (!res.ok) {
-        setError(data.error || 'Upload fail ho gaya.')
+      setStatus('PDF upload ho raha hai...')
+      const supabase = getBrowserSupabaseClient()
+      const { error: uploadError } = await supabase.storage
+        .from('textbooks')
+        .uploadToSignedUrl(urlData.path, urlData.token, file)
+
+      if (uploadError) {
+        setError(uploadError.message || 'File upload nahi ho saki.')
+        setLoading(false)
+        return
+      }
+
+      setStatus('Text nikala ja raha hai (AI se) — thoda time lag sakta hai...')
+      const processRes = await fetch('/api/upload-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storagePath: urlData.path,
+          class: studentClass,
+          subject,
+          chapter,
+          title: file.name,
+        }),
+      })
+      const processData = await processRes.json()
+
+      if (!processRes.ok) {
+        setError(processData.error || 'Processing fail ho gayi.')
       } else {
-        setMessage(`Upload ho gaya! ${data.chunksSaved} sections save hue. Ab "Study" page par isi Class/Subject se sawal poochein.`)
+        setMessage(
+          `Upload ho gaya! ${processData.chunksSaved} sections save hue. Ab "Study" page par isi Class/Subject se sawal poochein.`
+        )
         setFile(null)
         setChapter('')
       }
@@ -50,6 +85,7 @@ export default function UploadPage() {
       setError('Network error. Dobara koshish karein.')
     } finally {
       setLoading(false)
+      setStatus(null)
     }
   }
 
@@ -124,6 +160,7 @@ export default function UploadPage() {
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="w-full rounded-lg border border-slate-300 py-3 px-3 text-slate-800 bg-white text-sm"
           />
+          <p className="text-xs text-slate-400">Max 15MB. Badi textbook ho to chapters mein tod kar upload karein.</p>
         </div>
 
         <button
@@ -131,7 +168,7 @@ export default function UploadPage() {
           disabled={loading}
           className="w-full rounded-lg bg-primary text-white font-semibold py-3 disabled:opacity-60"
         >
-          {loading ? 'Uploading...' : 'Upload PDF'}
+          {loading ? status || 'Uploading...' : 'Upload PDF'}
         </button>
       </form>
 
