@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/prompts'
 import { findRelevantContext } from '@/lib/retrieval'
+import { logActivity } from '@/lib/activityLog'
 import type { Class, Subject } from '@/lib/types'
 import type { AnswerModeId } from '@/lib/constants'
 
@@ -90,6 +91,15 @@ export async function POST(req: NextRequest) {
         { status: 502 }
       )
     }
+
+    await logActivity({
+      source: 'study',
+      studentClass,
+      subject,
+      mode,
+      question,
+      answer,
+    })
 
     return NextResponse.json({ answer, usedUploadedMaterial: Boolean(context) })
   } catch (err) {
