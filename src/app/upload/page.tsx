@@ -19,6 +19,10 @@ export default function UploadPage() {
       setError('Pehle PDF file select karein.')
       return
     }
+    if (file.size > 4 * 1024 * 1024) {
+      setError('PDF bahut badi hai (4MB se zyada). Chhoti file ya kam pages wali PDF try karein.')
+      return
+    }
 
     setLoading(true)
     setMessage(null)
