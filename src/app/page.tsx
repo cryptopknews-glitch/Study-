@@ -82,11 +82,12 @@ export default function Home() {
         >
           BSCS Preparation
         </Link>
-        <div className="rounded-lg border border-dashed border-slate-300 py-4 text-center text-sm text-slate-400">
+        <Link
+          href="/css"
+          className="rounded-lg border border-slate-200 bg-white py-4 text-center text-sm font-medium text-slate-700 active:bg-slate-50"
+        >
           CSS Foundation
-          <br />
-          <span className="text-xs">(coming soon)</span>
-        </div>
+        </Link>
       </section>
     </div>
   )
