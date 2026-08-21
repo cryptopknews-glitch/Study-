@@ -21,7 +21,7 @@ export default function ManagePage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/books')
+      const res = await fetch('/api/books', { cache: 'no-store' })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error || 'Books load nahi ho sake.')
