@@ -172,7 +172,7 @@ export default function UploadAskPage() {
               📎 {files.length} file(s): {files.map((f) => f.name).join(', ')}
             </p>
           )}
-          <p className="text-xs text-slate-400">Max 4MB combined. Bade PDF ke liye "Upload" tool use karein.</p>
+          <p className="text-xs text-slate-400">Max 4MB combined. Bade PDF ke liye &quot;Upload&quot; tool use karein.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
