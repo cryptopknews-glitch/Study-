@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: '/bscs', label: 'BSCS Prep' },
   { href: '/css', label: 'CSS Foundation' },
   { href: '/upload', label: 'Upload' },
+  { href: '/upload-ask', label: 'Upload & Ask' },
   { href: '/manage', label: 'My Uploads' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/settings', label: 'AI Settings' },
