@@ -4,7 +4,7 @@ import { Suspense, useState, useRef, type FormEvent, type ComponentProps } from 
 import { useSearchParams } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import type { Class, Subject } from '@/lib/types'
+import { isRtlSubject, type Class, type Subject } from '@/lib/types'
 import { CLASSES, SUBJECTS, ANSWER_MODES, type AnswerModeId } from '@/lib/constants'
 
 const MATH_SYMBOLS = [
@@ -193,7 +193,7 @@ function StudyForm() {
           >
             {SUBJECTS.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label}
+                {s.label}{s.note ? ` (${s.note})` : ''}
               </option>
             ))}
           </select>
@@ -209,7 +209,8 @@ function StudyForm() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             rows={4}
-            placeholder="e.g. Explain derivatives"
+            dir={isRtlSubject(selectedSubject) ? 'rtl' : 'ltr'}
+            placeholder={isRtlSubject(selectedSubject) ? 'مثلاً: اسمِ نکرہ کی تعریف' : 'e.g. Explain derivatives'}
             className="w-full rounded-lg border border-slate-300 py-3 px-3 text-slate-800"
           />
           <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
@@ -292,9 +293,17 @@ function StudyForm() {
               </button>
             </div>
           </div>
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-            {answer}
-          </ReactMarkdown>
+          {isRtlSubject(selectedSubject) ? (
+            <div dir="rtl" className="text-right leading-loose [&_ul]:pr-5 [&_ul]:pl-0 [&_ol]:pr-5 [&_ol]:pl-0">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {answer}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {answer}
+            </ReactMarkdown>
+          )}
         </div>
       )}
     </div>

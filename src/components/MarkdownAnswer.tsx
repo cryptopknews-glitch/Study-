@@ -25,10 +25,25 @@ const markdownComponents: ComponentProps<typeof ReactMarkdown>['components'] = {
   td: (props) => <td className="border border-slate-200 px-2 py-1" {...props} />,
 }
 
-export default function MarkdownAnswer({ content }: { content: string }) {
-  return (
+export default function MarkdownAnswer({
+  content,
+  rtl = false,
+}: {
+  content: string
+  /** Urdu / Islamiat jaise subjects ke liye — jawab dayen se bayen. */
+  rtl?: boolean
+}) {
+  const body = (
     <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
       {content}
     </ReactMarkdown>
+  )
+
+  if (!rtl) return body
+
+  return (
+    <div dir="rtl" className="text-right leading-loose [&_ul]:pr-5 [&_ul]:pl-0 [&_ol]:pr-5 [&_ol]:pl-0">
+      {body}
+    </div>
   )
 }

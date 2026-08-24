@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
     chapter ? `Chapter/Topic: ${chapter}` : 'Cover key terms, formulas, or definitions from across the syllabus.',
     'Front = a term, formula name, or short question. Back = a concise definition, formula, or answer (1-3 sentences, exam-ready).',
     'For Math/CS, prioritize formulas and key definitions. For Economics/English, prioritize key terms and concepts.',
+    'For Urdu, Islamic Education and Pakistan Studies, write BOTH front and back in Urdu script (not Roman Urdu). For Urdu prioritize muhavare, zarb-ul-amsal, grammar terms and shair ki tashreeh. For Islamic Education prioritize ayat, ahadith, seerat events and ibadat terms. For Pakistan Studies prioritize dates, events, personalities and constitutional facts.',
+    'Never invent a Quranic reference, hadith, date or formula. If unsure, use a well-established one instead.',
     SCHEMA,
   ].join('\n')
 

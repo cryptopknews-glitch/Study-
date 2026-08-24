@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import MarkdownAnswer from '@/components/MarkdownAnswer'
 
 interface ActivityItem {
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
+  const [revision, setRevision] = useState<{ dueCount: number; totalCount: number } | null>(null)
 
   async function handleLogout() {
     await fetch('/api/logout', { method: 'POST' })
@@ -52,6 +54,13 @@ export default function DashboardPage() {
     try {
       const res = await fetch('/api/dashboard', { cache: 'no-store' })
       const json = await res.json()
+
+      // Revision ki halat alag se — dashboard fail ho to bhi ye chal jaye
+      fetch('/api/flashcards/review', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => setRevision({ dueCount: d.dueCount ?? 0, totalCount: d.totalCount ?? 0 }))
+        .catch(() => setRevision(null))
+
       if (!res.ok) {
         setError(json.error || 'Data load nahi ho saka.')
       } else {
@@ -138,6 +147,31 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {revision && revision.totalCount > 0 && (
+        <Link
+          href="/flashcards"
+          className={`block rounded-lg border p-4 ${
+            revision.dueCount > 0
+              ? 'border-primary/40 bg-primary/5'
+              : 'border-slate-200 bg-white'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-3xl font-bold text-primary">{revision.dueCount}</p>
+              <p className="text-xs text-slate-500 mt-1">
+                {revision.dueCount > 0
+                  ? 'Cards aaj revision ke liye due hain'
+                  : 'Aaj koi card due nahi — sab ho gaya'}
+              </p>
+            </div>
+            <span className="shrink-0 text-xs font-semibold text-primary">
+              {revision.dueCount > 0 ? 'Shuru karein →' : `${revision.totalCount} cards`}
+            </span>
+          </div>
+        </Link>
+      )}
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <p className="text-3xl font-bold text-primary">{data.totalCount}</p>

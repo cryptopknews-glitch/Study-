@@ -1,5 +1,16 @@
 import { getSupabaseClient } from './supabase'
 
+/**
+ * Uploaded textbook material se sirf wo hissa dhoondta hai jo sawaal se
+ * waqai milta ho.
+ *
+ * Ehtiyat: pehle yahan ek fallback tha jo koi match na milne par us
+ * class/subject ke aakhri chunks utha leta tha — chahe unka sawaal se koi
+ * taalluq na ho. Prompt AI ko kehta hai ke uploaded material ko "primary
+ * source" samjho, is liye AI ghair-mutalliq matn se jawab bana kar use
+ * textbook ka jawab keh deta tha. Ab match na milne par `null` return hota
+ * hai aur prompt khud AI ko bata deta hai ke koi material nahi mila.
+ */
 export async function findRelevantContext(params: {
   studentClass: string
   subject: string
@@ -10,7 +21,6 @@ export async function findRelevantContext(params: {
   try {
     const supabase = getSupabaseClient()
 
-    // Try a loose keyword search first (OR-style, not strict AND matching).
     const { data: searchResults } = await supabase
       .from('chunks')
       .select('content')
@@ -21,20 +31,6 @@ export async function findRelevantContext(params: {
 
     if (searchResults && searchResults.length > 0) {
       return searchResults.map((row: { content: string }) => row.content).join('\n---\n')
-    }
-
-    // Fallback: no exact keyword match, but material exists for this class/subject.
-    // For a small personal library this is still more useful than nothing.
-    const { data: fallbackResults } = await supabase
-      .from('chunks')
-      .select('content')
-      .eq('class', studentClass)
-      .eq('subject', subject)
-      .order('created_at', { ascending: false })
-      .limit(4)
-
-    if (fallbackResults && fallbackResults.length > 0) {
-      return fallbackResults.map((row: { content: string }) => row.content).join('\n---\n')
     }
 
     return null
