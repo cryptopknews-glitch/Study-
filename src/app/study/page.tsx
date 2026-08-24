@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useRef, type FormEvent, type ComponentProps } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { isRtlSubject, type Class, type Subject } from '@/lib/types'
@@ -37,6 +38,17 @@ const markdownComponents: ComponentProps<typeof ReactMarkdown>['components'] = {
   td: (props) => <td className="border border-slate-200 px-2 py-1" {...props} />,
 }
 
+interface QuizQ {
+  question: string
+  options: string[]
+  correctIndex: number
+  why?: string
+}
+interface Quiz {
+  intro?: string
+  questions: QuizQ[]
+}
+
 function StudyForm() {
   const searchParams = useSearchParams()
   const presetSubject = searchParams.get('subject') as Subject | null
@@ -50,6 +62,8 @@ function StudyForm() {
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
   const [answer, setAnswer] = useState<string | null>(null)
+  const [quiz, setQuiz] = useState<Quiz | null>(null)
+  const [picked, setPicked] = useState<Record<number, number>>({})
   const [error, setError] = useState<string | null>(null)
   const [savingNote, setSavingNote] = useState(false)
   const [noteSaved, setNoteSaved] = useState(false)
@@ -73,12 +87,38 @@ function StudyForm() {
     })
   }
 
+  async function chooseOption(qi: number, oi: number) {
+    if (picked[qi] !== undefined || !quiz) return
+    setPicked((prev) => ({ ...prev, [qi]: oi }))
+    const q = quiz.questions[qi]
+    try {
+      await fetch('/api/quiz-attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'study',
+          studentClass: selectedClass,
+          subject: selectedSubject,
+          topic: question.slice(0, 120),
+          question: q.question,
+          correct: oi === q.correctIndex,
+          chosen: q.options[oi],
+          answer: q.options[q.correctIndex],
+        }),
+      })
+    } catch {
+      /* record fail ho to bhi quiz chalta rahe */
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!question.trim()) return
 
     setLoading(true)
     setAnswer(null)
+    setQuiz(null)
+    setPicked({})
     setError(null)
     setCopied(false)
 
@@ -99,7 +139,8 @@ function StudyForm() {
       if (!res.ok) {
         setError(data.error || 'Kuch masla ho gaya, dobara koshish karein.')
       } else {
-        setAnswer(data.answer)
+        if (data.quiz) setQuiz(data.quiz)
+                else setAnswer(data.answer)
       }
     } catch {
       setError('Network error. Internet check karein aur dobara koshish karein.')
@@ -264,6 +305,74 @@ function StudyForm() {
           {error}
         </div>
       )}
+
+            {quiz && quiz.questions.length > 0 && (
+        <div className="space-y-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-800">Quiz</p>
+            <p className="text-sm">
+              <span className="font-bold text-success">
+                {Object.entries(picked).filter(([qi, oi]) => quiz.questions[Number(qi)]?.correctIndex === oi).length}
+              </span>
+              <span className="text-slate-400"> / {Object.keys(picked).length} sahi</span>
+            </p>
+          </div>
+
+          {quiz.intro && (
+            <p className="text-xs text-slate-500 px-1">{quiz.intro}</p>
+          )}
+
+          {quiz.questions.map((q, i) => {
+            const chosen = picked[i]
+            const revealed = chosen !== undefined
+            const rtl = isRtlSubject(selectedSubject)
+            return (
+              <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                <p className="text-sm text-slate-800" dir={rtl ? 'rtl' : 'ltr'}>
+                  {i + 1}. {q.question}
+                </p>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {q.options.map((opt, oi) => {
+                    const isChosen = chosen === oi
+                    const isRight = oi === q.correctIndex
+                    let cls = 'border-slate-200 text-slate-700'
+                    if (revealed && isRight) cls = 'border-success bg-green-50 text-success font-medium'
+                    else if (revealed && isChosen && !isRight) cls = 'border-danger bg-red-50 text-danger font-medium'
+                    return (
+                      <button
+                        key={oi}
+                        type="button"
+                        onClick={() => chooseOption(i, oi)}
+                        disabled={revealed}
+                        dir={rtl ? 'rtl' : 'ltr'}
+                        className={`text-sm text-left rounded-md border px-3 py-1.5 ${cls}`}
+                      >
+                        {String.fromCharCode(65 + oi)}. {opt}
+                        {revealed && isChosen && !isRight ? '  ✗' : ''}
+                        {revealed && isRight ? '  ✓' : ''}
+                      </button>
+                    )
+                  })}
+                </div>
+                {revealed && q.why && (
+                  <p className="text-xs text-slate-600 bg-slate-50 rounded-md p-2" dir={rtl ? 'rtl' : 'ltr'}>
+                    {q.why}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+
+          {Object.keys(picked).length > 0 && (
+            <p className="text-xs text-slate-500 text-center">
+              Galat jawab khud{' '}
+              <Link href="/mistakes" className="text-primary font-medium underline">Mistakes</Link>
+              {' '}page par chale jate hain.
+            </p>
+          )}
+        </div>
+      )}
+
 
       {answer && (
         <div className="rounded-lg border border-slate-200 bg-white p-4">
