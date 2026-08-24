@@ -30,7 +30,7 @@ interface Body {
  * badal gaya). Is liye ye sirf default hain — user UI se badal sakti hai,
  * aur paper par saaf likha hai ke board notification se tasdeeq karein.
  */
-export const DEFAULT_PATTERNS: Record<string, Pattern> = {
+const DEFAULT_PATTERNS: Record<string, Pattern> = {
   Mathematics:         { mcq: 20, shortGiven: 37, shortAttempt: 25, shortMarks: 2, longGiven: 5, longAttempt: 3, longMarks: 10 },
   Economics:           { mcq: 20, shortGiven: 37, shortAttempt: 25, shortMarks: 2, longGiven: 5, longAttempt: 3, longMarks: 10 },
   'Computer Science':  { mcq: 15, shortGiven: 27, shortAttempt: 18, shortMarks: 2, longGiven: 5, longAttempt: 3, longMarks: 8 },
@@ -40,7 +40,7 @@ export const DEFAULT_PATTERNS: Record<string, Pattern> = {
   'Pakistan Studies':  { mcq: 10, shortGiven: 8,  shortAttempt: 5,  shortMarks: 4, longGiven: 3, longAttempt: 2, longMarks: 10 },
 }
 
-export function totalOf(p: Pattern): number {
+function totalOf(p: Pattern): number {
   return p.mcq + p.shortAttempt * p.shortMarks + p.longAttempt * p.longMarks
 }
 
