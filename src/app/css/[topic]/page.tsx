@@ -66,6 +66,9 @@ export default function CssTopicPage({ params }: { params: { topic: string } }) 
     }
   }
 
+  const STALE_TOPICS = ['current-affairs', 'pakistan-affairs']
+  const showStaleWarning = STALE_TOPICS.includes(params.topic)
+
   return (
     <div className="px-4 py-8 space-y-6 pb-16">
       <Link href="/css" className="text-sm text-primary font-medium">
@@ -76,6 +79,16 @@ export default function CssTopicPage({ params }: { params: { topic: string } }) 
         <h1 className="text-2xl font-bold text-slate-900">{topic.name}</h1>
         <p className="text-slate-600 text-sm">{topic.description}</p>
       </div>
+
+      {showStaleWarning && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <p className="text-xs text-amber-900 leading-relaxed">
+            <b>Ehtiyat:</b> AI ki maloomat purani ho sakti hai. Current Affairs aur Pakistan Affairs har
+            mahine badalte hain — taza waqiat ke liye akhbar ya kisi mautabar khabar wali site se tasdeeq
+            zaroor karein. Yahan se sirf mauzu samajhne mein madad lein, taza facts ke liye nahi.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <label htmlFor="question" className="block text-sm font-medium text-slate-700">

@@ -13,7 +13,7 @@ const NAV_LINKS = [
   { href: '/mistakes', label: 'Mistakes' },
   { href: '/english', label: 'English' },
   { href: '/bscs', label: 'BSCS Prep' },
-  { href: '/css', label: 'CSS Foundation' },
+  { href: '/css', label: 'CSS' },
   { href: '/upload', label: 'Upload' },
   { href: '/upload-ask', label: 'Upload & Ask' },
   { href: '/manage', label: 'My Uploads' },
