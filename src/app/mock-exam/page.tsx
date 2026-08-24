@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from 'react'
 import { CLASSES, SUBJECTS } from '@/lib/constants'
-import type { Class, Subject } from '@/lib/types'
+import { isRtlSubject, type Class, type Subject } from '@/lib/types'
+import AnswerGrader from '@/components/AnswerGrader'
 
 interface MockPaper {
   title: string
@@ -24,6 +25,33 @@ export default function MockExamPage() {
   const [paper, setPaper] = useState<MockPaper | null>(null)
   const [showAnswers, setShowAnswers] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [picked, setPicked] = useState<Record<number, number>>({})
+  const [mcqSaved, setMcqSaved] = useState(false)
+
+  async function chooseMcq(qi: number, oi: number) {
+    if (showAnswers || picked[qi] !== undefined || !paper) return
+    setPicked((prev) => ({ ...prev, [qi]: oi }))
+    const q = paper.mcqs[qi]
+    try {
+      await fetch('/api/quiz-attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'mock-exam',
+          studentClass,
+          subject,
+          topic: chapter || null,
+          question: q.question,
+          correct: oi === q.correctIndex,
+          chosen: q.options[oi],
+          answer: q.options[q.correctIndex],
+        }),
+      })
+      setMcqSaved(true)
+    } catch {
+      /* record fail ho to bhi paper chalta rahe */
+    }
+  }
 
   async function handleGenerate(e: FormEvent) {
     e.preventDefault()
@@ -31,6 +59,8 @@ export default function MockExamPage() {
     setError(null)
     setPaper(null)
     setShowAnswers(false)
+    setPicked({})
+    setMcqSaved(false)
 
     try {
       const res = await fetch('/api/mock-exam', {
@@ -92,7 +122,7 @@ export default function MockExamPage() {
           >
             {SUBJECTS.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label}
+                {s.label}{s.note ? ` (${s.note})` : ''}
               </option>
             ))}
           </select>
@@ -144,18 +174,28 @@ export default function MockExamPage() {
                   {i + 1}. {q.question}
                 </p>
                 <div className="grid grid-cols-1 gap-1.5">
-                  {q.options.map((opt, oi) => (
-                    <div
-                      key={oi}
-                      className={`text-sm rounded-md border px-3 py-1.5 ${
-                        showAnswers && oi === q.correctIndex
-                          ? 'border-success bg-green-50 text-success font-medium'
-                          : 'border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {String.fromCharCode(65 + oi)}. {opt}
-                    </div>
-                  ))}
+                  {q.options.map((opt, oi) => {
+                    const chosen = picked[i]
+                    const isChosen = chosen === oi
+                    const isRight = oi === q.correctIndex
+                    const reveal = showAnswers || chosen !== undefined
+                    let cls = 'border-slate-200 text-slate-700'
+                    if (reveal && isRight) cls = 'border-success bg-green-50 text-success font-medium'
+                    else if (reveal && isChosen && !isRight) cls = 'border-danger bg-red-50 text-danger font-medium'
+                    return (
+                      <button
+                        key={oi}
+                        type="button"
+                        onClick={() => chooseMcq(i, oi)}
+                        disabled={reveal}
+                        className={`text-sm text-left rounded-md border px-3 py-1.5 ${cls}`}
+                      >
+                        {String.fromCharCode(65 + oi)}. {opt}
+                        {reveal && isChosen && !isRight ? '  ✗' : ''}
+                        {reveal && isRight ? '  ✓' : ''}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             ))}
@@ -167,14 +207,23 @@ export default function MockExamPage() {
             </h2>
             {paper.shortQuestions.map((q, i) => (
               <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                <p className="text-sm text-slate-800">
+                <p className="text-sm text-slate-800" dir={isRtlSubject(subject) ? 'rtl' : 'ltr'}>
                   {i + 1}. {q}
                 </p>
                 {showAnswers && (
-                  <p className="text-sm text-success bg-green-50 rounded-md p-2">
+                  <p className="text-sm text-success bg-green-50 rounded-md p-2" dir={isRtlSubject(subject) ? 'rtl' : 'ltr'}>
                     {paper.modelAnswers.shortAnswers[i]}
                   </p>
                 )}
+                <AnswerGrader
+                  question={q}
+                  maxMarks={3}
+                  studentClass={studentClass}
+                  subject={subject}
+                  chapter={chapter}
+                  source="mock-exam"
+                  modelAnswer={paper.modelAnswers.shortAnswers[i] ?? null}
+                />
               </div>
             ))}
           </section>
@@ -185,17 +234,33 @@ export default function MockExamPage() {
             </h2>
             {paper.longQuestions.map((q, i) => (
               <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                <p className="text-sm text-slate-800">
+                <p className="text-sm text-slate-800" dir={isRtlSubject(subject) ? 'rtl' : 'ltr'}>
                   {i + 1}. {q}
                 </p>
                 {showAnswers && (
-                  <p className="text-sm text-success bg-green-50 rounded-md p-2">
+                  <p className="text-sm text-success bg-green-50 rounded-md p-2" dir={isRtlSubject(subject) ? 'rtl' : 'ltr'}>
                     {paper.modelAnswers.longAnswerHints[i]}
                   </p>
                 )}
+                <AnswerGrader
+                  question={q}
+                  maxMarks={12}
+                  studentClass={studentClass}
+                  subject={subject}
+                  chapter={chapter}
+                  source="mock-exam"
+                  modelAnswer={paper.modelAnswers.longAnswerHints[i] ?? null}
+                />
               </div>
             ))}
           </section>
+
+          {mcqSaved && (
+            <p className="text-xs text-slate-500 text-center">
+              MCQ ke jawab record ho rahe hain — galtiyan{' '}
+              <a href="/mistakes" className="text-primary font-medium underline">Mistakes</a> page par milengi.
+            </p>
+          )}
 
           <button
             onClick={() => setShowAnswers((v) => !v)}

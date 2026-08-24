@@ -41,6 +41,8 @@ export default function DashboardPage() {
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null)
   const [revision, setRevision] = useState<{ dueCount: number; totalCount: number } | null>(null)
+  const [weak, setWeak] = useState<{ subject: string; topic: string; accuracy: number; right: number; total: number }[]>([])
+  const [quizStats, setQuizStats] = useState<{ totalAttempts: number; totalWrong: number } | null>(null)
 
   async function handleLogout() {
     await fetch('/api/logout', { method: 'POST' })
@@ -60,6 +62,15 @@ export default function DashboardPage() {
         .then((r) => r.json())
         .then((d) => setRevision({ dueCount: d.dueCount ?? 0, totalCount: d.totalCount ?? 0 }))
         .catch(() => setRevision(null))
+
+      // Kamzor topics — quiz attempts se
+      fetch('/api/quiz-attempts?only=wrong', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => {
+          setWeak(d.weak ?? [])
+          setQuizStats({ totalAttempts: d.totalAttempts ?? 0, totalWrong: d.totalWrong ?? 0 })
+        })
+        .catch(() => setWeak([]))
 
       if (!res.ok) {
         setError(json.error || 'Data load nahi ho saka.')
@@ -177,6 +188,43 @@ export default function DashboardPage() {
         <p className="text-3xl font-bold text-primary">{data.totalCount}</p>
         <p className="text-xs text-slate-500 mt-1">Total questions poochay gaye</p>
       </section>
+
+      {quizStats && quizStats.totalAttempts > 0 && (
+        <Link href="/mistakes" className="block rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-3xl font-bold text-danger">{quizStats.totalWrong}</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Galat sawaal · {quizStats.totalAttempts} mein se
+                {' '}({Math.round(((quizStats.totalAttempts - quizStats.totalWrong) / quizStats.totalAttempts) * 100)}% sahi)
+              </p>
+            </div>
+            <span className="shrink-0 text-xs font-semibold text-primary">Galtiyan dekhein →</span>
+          </div>
+        </Link>
+      )}
+
+      {weak.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+            Kamzor Topics
+          </h2>
+          {weak.slice(0, 5).map((w, i) => (
+            <div key={i} className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">{w.topic}</p>
+                  <p className="text-xs text-slate-600">{w.subject}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-bold text-amber-700">{w.accuracy}%</p>
+                  <p className="text-[11px] text-slate-500">{w.right}/{w.total}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {subjectEntries.length > 0 && (
         <section className="space-y-3">
