@@ -107,8 +107,9 @@ export async function POST(req: NextRequest) {
     if (!answer) return NextResponse.json({ error: 'AI ne khaali jawab diya.' }, { status: 502 })
 
     await logActivity({
-      source: 'css-gsa',
+      source: 'css',
       subject: 'General Science & Ability',
+      mode: `gsa-${area}`,
       question: question || area,
       answer,
     })
