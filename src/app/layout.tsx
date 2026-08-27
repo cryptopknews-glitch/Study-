@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import Navbar from '@/components/Navbar'
+import SecurityBanner from '@/components/SecurityBanner'
 
 export const metadata: Metadata = {
   title: '10MinStudy - Personal AI Study Assistant',
@@ -14,6 +15,13 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon-192.png',
     apple: '/icon-192.png',
+  },
+  // Ye zaati app hai — search engines is ka login page bhi index na karein.
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: { index: false, follow: false },
   },
 }
 
@@ -31,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SecurityBanner />
         <Navbar />
         <main className="max-w-4xl mx-auto">{children}</main>
       </body>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type FormEvent } from 'react'
+import LogoutButton from '@/components/LogoutButton'
 
 export default function SettingsPage() {
   const [maskedApiKey, setMaskedApiKey] = useState('')
@@ -149,6 +150,15 @@ export default function SettingsPage() {
           )}
         </>
       )}
+
+      <section className="pt-2 space-y-3 border-t border-slate-200">
+        <h2 className="text-sm font-semibold text-slate-700">Hifazat</h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Sanjhe ya udhaar liye phone par kaam khatam kar ke logout zaroor karein.
+          Dobara khulne par password poochha jayega.
+        </p>
+        <LogoutButton />
+      </section>
     </div>
   )
 }

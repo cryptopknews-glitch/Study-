@@ -1,0 +1,3 @@
+# 10MinStudy ek zaati app hai — koi bhi search engine ise index na kare.
+User-agent: *
+Disallow: /
