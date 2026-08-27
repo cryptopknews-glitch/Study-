@@ -44,6 +44,24 @@ export default function DashboardPage() {
   const [weak, setWeak] = useState<{ subject: string; topic: string; accuracy: number; right: number; total: number }[]>([])
   const [quizStats, setQuizStats] = useState<{ totalAttempts: number; totalWrong: number } | null>(null)
 
+  /** Lagataar kitne din kaam hua — activity ki tareekhon se. */
+  function calcStreak(items: { created_at: string }[]): { current: number; today: boolean } {
+    if (!items.length) return { current: 0, today: false }
+    const days = new Set(items.map((i) => new Date(i.created_at).toLocaleDateString('en-CA')))
+    const todayStr = new Date().toLocaleDateString('en-CA')
+    const today = days.has(todayStr)
+    let count = 0
+    const cursor = new Date()
+    if (!today) cursor.setDate(cursor.getDate() - 1) // kal tak ka silsila
+    for (let i = 0; i < 400; i++) {
+      if (days.has(cursor.toLocaleDateString('en-CA'))) {
+        count++
+        cursor.setDate(cursor.getDate() - 1)
+      } else break
+    }
+    return { current: count, today }
+  }
+
   async function handleLogout() {
     await fetch('/api/logout', { method: 'POST' })
     router.push('/login')
@@ -158,6 +176,30 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {data.recent.length > 0 && (() => {
+        const s = calcStreak(data.recent)
+        if (s.current === 0) return null
+        return (
+          <section className={`rounded-lg border p-4 ${
+            s.today ? 'border-orange-300 bg-orange-50' : 'border-slate-200 bg-white'
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{s.today ? '🔥' : '💤'}</span>
+              <div>
+                <p className="text-2xl font-bold text-slate-900">
+                  {s.current} din
+                </p>
+                <p className="text-xs text-slate-600">
+                  {s.today
+                    ? 'lagataar — aaj bhi ho gaya, shabash'
+                    : 'ka silsila tha — aaj kuch karein to barh jayega'}
+                </p>
+              </div>
+            </div>
+          </section>
+        )
+      })()}
 
       {revision && revision.totalCount > 0 && (
         <Link

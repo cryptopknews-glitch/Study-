@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { isRtlSubject, type Class, type Subject } from '@/lib/types'
+import ExplainInUrdu from '@/components/ExplainInUrdu'
 import { CLASSES, SUBJECTS, ANSWER_MODES, type AnswerModeId } from '@/lib/constants'
 
 const MATH_SYMBOLS = [
@@ -413,6 +414,8 @@ function StudyForm() {
               {answer}
             </ReactMarkdown>
           )}
+
+          <ExplainInUrdu text={answer} subject={selectedSubject} />
         </div>
       )}
     </div>

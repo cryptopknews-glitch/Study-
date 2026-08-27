@@ -10,6 +10,8 @@ const MODE_INSTRUCTIONS: Record<AnswerModeId, string> = {
     'Summarize the topic/chapter in short bullet points. Keep it exam-focused and easy to revise from.',
   practice:
     'Generate 3-5 practice questions on this topic, ordered from easy to hard. Do not include the answers.',
+  numericals:
+    'Generate 8 numerical/problem-solving questions on this topic, ordered from easy to hard, exactly in the style the Punjab Board asks them. Number them 1 to 8. Do NOT show any working or answers with the questions. After all eight, add a markdown horizontal rule, then a heading "## Solutions", then the full step-by-step solution for each one. Verify every final answer independently before writing it.',
   quiz:
     'Generate 5 multiple choice questions (MCQs) with 4 options each on this topic. List the correct options at the end under an "Answers" heading.',
 }

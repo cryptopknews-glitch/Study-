@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/mock-exam', label: 'Mock Exam' },
   { href: '/past-papers', label: 'Past Papers' },
   { href: '/flashcards', label: 'Flashcards' },
+  { href: '/formulas', label: 'Formulas' },
   { href: '/mistakes', label: 'Mistakes' },
   { href: '/english', label: 'English' },
   { href: '/bscs', label: 'BSCS Prep' },

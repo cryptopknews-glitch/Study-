@@ -17,6 +17,7 @@ export const ANSWER_MODES = [
   { id: 'solve', label: 'Solve' },
   { id: 'summarize', label: 'Summarize' },
   { id: 'practice', label: 'Practice' },
+  { id: 'numericals', label: 'Numericals' },
   { id: 'quiz', label: 'Quiz' },
 ] as const
 
