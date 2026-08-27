@@ -54,6 +54,60 @@ export const BSCS_TOPICS: BscsTopic[] = [
     description: 'How computers work — hardware, OS, and basic architecture.',
     icon: '🖥️',
   },
+  {
+    slug: 'oop',
+    name: 'Object Oriented Programming',
+    description: 'Classes, objects, inheritance, polymorphism, encapsulation.',
+    icon: '🧱',
+  },
+  {
+    slug: 'databases',
+    name: 'Database Systems (SQL)',
+    description: 'ER models, normalization, SQL queries, transactions, indexing.',
+    icon: '🗄️',
+  },
+  {
+    slug: 'operating-systems',
+    name: 'Operating Systems',
+    description: 'Processes, threads, scheduling, memory management, deadlocks, file systems.',
+    icon: '🖥️',
+  },
+  {
+    slug: 'computer-networks',
+    name: 'Computer Networks',
+    description: 'OSI and TCP/IP layers, routing, protocols, sockets, network security basics.',
+    icon: '🌐',
+  },
+  {
+    slug: 'software-engineering',
+    name: 'Software Engineering',
+    description: 'SDLC, requirements, design patterns, testing, version control, agile.',
+    icon: '📐',
+  },
+  {
+    slug: 'web-development',
+    name: 'Web Development',
+    description: 'HTML, CSS, JavaScript, HTTP, front-end frameworks, REST APIs.',
+    icon: '🕸️',
+  },
+  {
+    slug: 'theory-of-automata',
+    name: 'Theory of Automata',
+    description: 'Finite automata, regular expressions, context-free grammars, Turing machines.',
+    icon: '🔁',
+  },
+  {
+    slug: 'ai-ml',
+    name: 'Artificial Intelligence & ML',
+    description: 'Search, knowledge representation, neural networks, supervised and unsupervised learning.',
+    icon: '🤖',
+  },
+  {
+    slug: 'final-year-project',
+    name: 'Final Year Project',
+    description: 'Choosing a topic, proposal writing, documentation, and defending the project.',
+    icon: '🎓',
+  },
 ]
 
 export function getBscsTopicBySlug(slug: string): BscsTopic | undefined {
