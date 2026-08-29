@@ -100,7 +100,7 @@ export default function UploadPage() {
         setLoading(false)
         return
       }
-      let processData: { chunksSaved?: number; error?: string }
+      let processData: { chunksSaved?: number; error?: string; usedAiExtraction?: boolean }
       try {
         processData = await processRes.json()
       } catch {
@@ -114,7 +114,7 @@ export default function UploadPage() {
         setError('Step 3 (upload-pdf) fail: ' + (processData.error || `status ${processRes.status}`))
       } else {
         setMessage(
-          `Upload ho gaya! ${processData.chunksSaved} sections save hue. Ab "Study" page par isi Class/Subject se sawal poochein.`
+          `Upload ho gaya! ${processData.chunksSaved} sections save hue (${processData.usedAiExtraction ? 'AI se text nikala gaya' : 'seedha PDF se text nikala gaya, tez tha'}). Ab "Study" page par isi Class/Subject se sawal poochein.`
         )
         setFile(null)
         setChapter('')

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseClient } from '@/lib/supabase'
 import { chunkText } from '@/lib/chunk'
 import { getGeminiConfig } from '@/lib/aiConfig'
+import pdfParse from 'pdf-parse'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -108,8 +109,29 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const base64Pdf = Buffer.from(arrayBuffer).toString('base64')
-    const extractedText = await extractTextWithGemini(base64Pdf, apiKey, model)
+    const pdfBuffer = Buffer.from(arrayBuffer)
+
+    // Fast path: most textbook PDFs are digitally typeset, not scanned.
+    // Try native, instant extraction first — only fall back to slower Gemini
+    // OCR (which can be slow enough to hit the serverless time limit) when
+    // the PDF turns out to be scanned/image-based and native extraction
+    // yields little or no text.
+    let extractedText = ''
+    let usedAiExtraction = false
+    try {
+      const parsed = await pdfParse(pdfBuffer)
+      extractedText = (parsed.text || '').trim()
+    } catch {
+      extractedText = ''
+    }
+
+    const NATIVE_TEXT_MIN_LENGTH = 200
+    if (extractedText.length < NATIVE_TEXT_MIN_LENGTH) {
+      const base64Pdf = pdfBuffer.toString('base64')
+      extractedText = await extractTextWithGemini(base64Pdf, apiKey, model)
+      usedAiExtraction = true
+    }
+
     const chunks = chunkText(extractedText)
 
     // Clean up: we only need the extracted text going forward, not the raw PDF.
@@ -149,7 +171,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: chunksError.message }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, chunksSaved: rows.length, bookId: book.id })
+    return NextResponse.json({
+      success: true,
+      chunksSaved: rows.length,
+      bookId: book.id,
+      usedAiExtraction,
+    })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Upload fail ho gaya.' },
