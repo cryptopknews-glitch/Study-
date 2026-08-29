@@ -11,33 +11,49 @@ export const maxDuration = 60
 const MAX_PDF_BYTES = 15 * 1024 * 1024
 
 async function extractTextWithGemini(base64Pdf: string, apiKey: string, model: string): Promise<string> {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { inline_data: { mime_type: 'application/pdf', data: base64Pdf } },
-              {
-                text: 'Extract all readable text from this document exactly as written, including text from scanned or handwritten pages if present. Preserve headings and structure using plain text. Do not summarize and do not add commentary — output only the extracted text.',
-              },
-            ],
-          },
-        ],
-      }),
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 50_000)
+
+  let res: Response
+  try {
+    res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { inline_data: { mime_type: 'application/pdf', data: base64Pdf } },
+                {
+                  text: 'Extract all readable text from this document exactly as written, including text from scanned or handwritten pages if present. Preserve headings and structure using plain text. Do not summarize and do not add commentary — output only the extracted text.',
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    )
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(
+        `AI text extraction 50 seconds mein complete nahi hui (model: ${model}). Model name AI Settings mein check karein, ya chhoti PDF try karein.`
+      )
     }
-  )
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!res.ok) {
     const errText = await res.text()
-    throw new Error(`Text extraction failed (${res.status}): ${errText}`)
+    throw new Error(`Text extraction failed (${res.status}, model: ${model}): ${errText}`)
   }
 
   const data = await res.json()
