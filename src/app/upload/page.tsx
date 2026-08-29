@@ -34,46 +34,84 @@ export default function UploadPage() {
 
     try {
       setStatus('Upload URL taiyar ho rahi hai...')
-      const urlRes = await fetch('/api/upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: file.name }),
-      })
-      const urlData = await urlRes.json()
-      if (!urlRes.ok) {
-        setError(urlData.error || 'Upload URL nahi ban saki.')
+      let urlRes: Response
+      try {
+        urlRes = await fetch('/api/upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name }),
+        })
+      } catch (e) {
+        setError('Step 1 (upload-url) request bhej hi nahi saki: ' + (e instanceof Error ? e.message : String(e)))
+        setLoading(false)
+        return
+      }
+      let urlData: { path?: string; token?: string; error?: string }
+      try {
+        urlData = await urlRes.json()
+      } catch {
+        const rawText = await urlRes.text().catch(() => '')
+        setError(`Step 1 (upload-url) ne JSON nahi diya (status ${urlRes.status}): ${rawText.slice(0, 200)}`)
+        setLoading(false)
+        return
+      }
+      if (!urlRes.ok || !urlData.path || !urlData.token) {
+        setError('Step 1 (upload-url) fail: ' + (urlData.error || `status ${urlRes.status}`))
         setLoading(false)
         return
       }
 
       setStatus('PDF upload ho raha hai...')
       const supabase = getBrowserSupabaseClient()
-      const { error: uploadError } = await supabase.storage
-        .from('textbooks')
-        .uploadToSignedUrl(urlData.path, urlData.token, file)
+      let uploadError: { message?: string } | null = null
+      try {
+        const result = await supabase.storage
+          .from('textbooks')
+          .uploadToSignedUrl(urlData.path, urlData.token, file)
+        uploadError = result.error
+      } catch (e) {
+        setError('Step 2 (Supabase storage upload) crash hui: ' + (e instanceof Error ? e.message : String(e)))
+        setLoading(false)
+        return
+      }
 
       if (uploadError) {
-        setError(uploadError.message || 'File upload nahi ho saki.')
+        setError('Step 2 (Supabase storage upload) fail: ' + (uploadError.message || 'unknown error'))
         setLoading(false)
         return
       }
 
       setStatus('Text nikala ja raha hai (AI se) — thoda time lag sakta hai...')
-      const processRes = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storagePath: urlData.path,
-          class: studentClass,
-          subject,
-          chapter,
-          title: file.name,
-        }),
-      })
-      const processData = await processRes.json()
+      let processRes: Response
+      try {
+        processRes = await fetch('/api/upload-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            storagePath: urlData.path,
+            class: studentClass,
+            subject,
+            chapter,
+            title: file.name,
+          }),
+        })
+      } catch (e) {
+        setError('Step 3 (upload-pdf) request bhej hi nahi saki: ' + (e instanceof Error ? e.message : String(e)))
+        setLoading(false)
+        return
+      }
+      let processData: { chunksSaved?: number; error?: string }
+      try {
+        processData = await processRes.json()
+      } catch {
+        const rawText = await processRes.text().catch(() => '')
+        setError(`Step 3 (upload-pdf) ne JSON nahi diya (status ${processRes.status}): ${rawText.slice(0, 200)}`)
+        setLoading(false)
+        return
+      }
 
       if (!processRes.ok) {
-        setError(processData.error || 'Processing fail ho gayi.')
+        setError('Step 3 (upload-pdf) fail: ' + (processData.error || `status ${processRes.status}`))
       } else {
         setMessage(
           `Upload ho gaya! ${processData.chunksSaved} sections save hue. Ab "Study" page par isi Class/Subject se sawal poochein.`
@@ -81,8 +119,8 @@ export default function UploadPage() {
         setFile(null)
         setChapter('')
       }
-    } catch {
-      setError('Network error. Dobara koshish karein.')
+    } catch (e) {
+      setError('Anjaan error: ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setLoading(false)
       setStatus(null)
