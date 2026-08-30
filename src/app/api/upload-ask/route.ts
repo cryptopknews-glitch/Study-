@@ -48,14 +48,33 @@ export async function POST(req: NextRequest) {
     }
     parts.push({ text: question })
 
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify({ contents: [{ role: 'user', parts }] }),
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 50_000)
+
+    let aiResponse: Response
+    try {
+      aiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          signal: controller.signal,
+          body: JSON.stringify({ contents: [{ role: 'user', parts }] }),
+        }
+      )
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return NextResponse.json(
+          {
+            error: `AI 50 seconds mein jawab nahi de saki (model: ${model}). Kam files/chhoti screenshots try karein, ya model name AI Settings mein check karein.`,
+          },
+          { status: 504 }
+        )
       }
-    )
+      throw err
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text()
