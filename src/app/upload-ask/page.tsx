@@ -92,16 +92,32 @@ export default function UploadAskPage() {
       formData.append('subject', subject)
       files.forEach((f) => formData.append('files', f))
 
-      const res = await fetch('/api/upload-ask', { method: 'POST', body: formData })
-      const data = await res.json()
+      let res: Response
+      try {
+        res = await fetch('/api/upload-ask', { method: 'POST', body: formData })
+      } catch (e) {
+        setError('Request bhej hi nahi saki: ' + (e instanceof Error ? e.message : String(e)))
+        setLoading(false)
+        return
+      }
+
+      let data: { answer?: string; error?: string }
+      try {
+        data = await res.json()
+      } catch {
+        const rawText = await res.text().catch(() => '')
+        setError(`Server ne JSON nahi diya (status ${res.status}): ${rawText.slice(0, 200)}`)
+        setLoading(false)
+        return
+      }
 
       if (!res.ok) {
-        setError(data.error || 'Kuch masla ho gaya.')
+        setError(data.error || `Kuch masla ho gaya (status ${res.status}).`)
       } else {
-        setAnswer(data.answer)
+        setAnswer(data.answer || '')
       }
-    } catch {
-      setError('Network error. Dobara koshish karein.')
+    } catch (e) {
+      setError('Anjaan error: ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setLoading(false)
     }
